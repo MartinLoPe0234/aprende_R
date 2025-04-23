@@ -1,0 +1,139 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+library(stringr)
+
+```
+#Este es para leer el archivo
+```{r}
+# xenopus <- read.delim(file.choose("xenopus.txt"), header = TRUE, sep = "\t");
+xenopus <- read.delim("C:/Users/Usuario/Documents/Alumnointerno/data/ncbi_dataset.tsv", header = TRUE, sep = "\t");
+```
+
+#Este es para agruparlos en los tipos de genes
+```{r}
+conteos <- xenopus %>%
+group_by(Gene.Type)%>%
+summarise(Conteo = n()) 
+conteos
+```
+
+```{r}
+# xenopus = xenopus %>% filter(Gene.Type == "protein-coding")
+```
+
+
+#En este caso el código de abajo es para realizar un histograma sobre los tipos de genes que hay
+```{r}
+ggplot(conteos, aes(x = Gene.Type, y = Conteo)) +
+  geom_col(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Conteo por tipo de gen",
+       x = "Tipo de gen",
+       y = "Cantidad")
+```
+ 
+#Esto es para ver las proteínas que se encuentran en el archivo
+```{r}
+filas_con_proteina <- xenopus %>%
+  filter(if_any(everything(), ~ str_detect(., regex("protein", ignore_case = TRUE))))
+```
+
+#Esto coge las filas con esas proteínas y las organiza
+```{r}
+filas_con_proteina %>%
+  count(Gene.Type, sort = TRUE)
+
+```
+  
+#Esto es para que me diga las organizaciones que ha hecho
+```{r}
+filas_con_proteina %>%
+  summarise(across(everything(), ~ n_distinct(.)))
+
+```
+
+#Esto es para qeu agrupe según el nombre de la proteína
+```{r}
+xenopus %>%
+group_by(Protein.name)%>%
+summarise(Conteosa = n()) 
+
+```
+
+#Esto va a contabilizar los nombres de la proteína
+```{r}
+frecuencias <- xenopus %>%
+  group_by(Protein.name) %>%
+  summarise(Conteosa = n())
+
+```
+
+#Esto es para hacer el histograma
+```{r}
+ggplot(frecuencias, aes(x = Conteosa)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
+  theme_minimal() +
+  labs(title = "Histograma de frecuencias de proteínas",
+       x = "Número de ocurrencias",
+       y = "Cantidad de proteínas")
+
+```
+
+```{r}
+
+
+#top10 <- frecuencias %>%
+#  arrange(desc(Conteosa)) %>%
+# slice_head(n = 10)
+
+#ggplot(top10, aes(x = reorder(Protein.name, Conteosa), y = Conteosa)) +
+#  geom_col(fill = "darkorange") +
+#  coord_flip() +
+#  theme_minimal() +
+#  labs(title = "Top 10 proteínas más frecuentes",
+#       x = "Proteína",
+#       y = "Frecuencia")
+
+```
+
+
+
+# Seleccionar las 10 proteínas más frecuentes
+```{r}
+# top_10_proteinas <- head(Conteosa, 10)
+# head(frecuencias)
+top_10_proteinas <- frecuencias %>% 
+  filter(Protein.name != "") %>% 
+  slice_max(Conteosa, n=3)
+top_10_proteinas
+```
+
+
+# Crear el histograma
+
+```{r}
+top10 = xenopus %>% 
+  filter(Protein.name %in% top_10_proteinas$Protein.name)
+top10
+
+```
+
+
+```{r}
+# top10 %>% 
+#     ggplot(aes(x = reorder(Protein.name, -Conteo), y = Conteo)) +
+#     geom_bar(stat = "identity", fill = "skyblue") +
+#     labs(title = "Top 10 Proteínas Más Frecuentes",
+#          x = "Nombre de Proteína",
+#          y = "Frecuencia") +
+#     theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
